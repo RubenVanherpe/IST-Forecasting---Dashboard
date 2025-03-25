@@ -99,6 +99,7 @@ scaler_NN = None
 app = dash.Dash(__name__, external_stylesheets=[
     dbc.themes.SUPERHERO, dbc.icons.BOOTSTRAP,"https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css",
 ], suppress_callback_exceptions=True)
+server = app.server
 app.title = "IST - Electricity Forecasting Tool"
 load_figure_template("superhero")
 
