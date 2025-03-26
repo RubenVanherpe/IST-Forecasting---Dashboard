@@ -93,13 +93,14 @@ model_DT = None
 model_RF = None
 model_NN = None
 scaler_SVR = None
+scaler_SVR_features = None
 scaler_NN = None
+scaler_NN_features = None
 
 #INITIALIZING THE APP WITH CUSTOM THEME SUPERHERO AND IMPORTING BOOTSTRAP ICONS
 app = dash.Dash(__name__, external_stylesheets=[
     dbc.themes.SUPERHERO, dbc.icons.BOOTSTRAP,"https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css",
 ], suppress_callback_exceptions=True)
-server = app.server
 app.title = "IST - Electricity Forecasting Tool"
 load_figure_template("superhero")
 
@@ -601,15 +602,15 @@ linear_regression_layout = dbc.Container(dbc.Card(
 
 #CREATING THE PAGE FOR THE SUPPORT VECTOR REGRESSION MODEL
 def support_vector_regression(X,Y):
-    global model_SVR, scaler_SVR
+    global model_SVR, scaler_SVR, scaler_SVR_features
     X_train, X_test, y_train, y_test = train_test_split(X, Y)
-    ss_X = StandardScaler()
+    scaler_SVR_features = StandardScaler()
     scaler_SVR = StandardScaler()
-    X_train_ss = ss_X.fit_transform(X_train)
+    X_train_ss = scaler_SVR_features.fit_transform(X_train)
     y_train_ss = scaler_SVR.fit_transform(y_train.reshape(-1, 1))
     model_SVR = SVR(kernel='rbf')
     model_SVR.fit(X_train_ss, y_train_ss)
-    y_pred_SVR = model_SVR.predict(ss_X.fit_transform(X_test))
+    y_pred_SVR = model_SVR.predict(scaler_SVR_features.fit_transform(X_test))
     y_pred_SVR2 = scaler_SVR.inverse_transform(y_pred_SVR.reshape(-1, 1))
     return y_test, y_pred_SVR2.flatten()
 
@@ -646,15 +647,15 @@ random_forest_layout  = dbc.Container(dbc.Card(
 
 #CREATING THE PAGE FOR THE NEURAL NETWORK MODEL
 def neural_network(X,Y):
-    global model_NN, scaler_NN
+    global model_NN, scaler_NN, scaler_NN_features
     X_train, X_test, y_train, y_test = train_test_split(X, Y)
-    ss_X = StandardScaler()
+    scaler_NN_features = StandardScaler()
     scaler_NN = StandardScaler()
-    X_train_ss = ss_X.fit_transform(X_train)
+    X_train_ss = scaler_NN_features.fit_transform(X_train)
     y_train_ss = scaler_NN.fit_transform(y_train.reshape(-1, 1))
     model_NN = MLPRegressor(hidden_layer_sizes=(30, 30, 30), max_iter=300)
     model_NN.fit(X_train_ss, y_train_ss)
-    y_pred_NN = model_NN.predict(ss_X.transform(X_test))
+    y_pred_NN = model_NN.predict(scaler_NN_features.transform(X_test))
     y_pred_NN2 = scaler_NN.inverse_transform(y_pred_NN.reshape(-1, 1))
     return y_test, y_pred_NN2.flatten()
 
@@ -711,7 +712,7 @@ help_layout = html.Div([
 
         dbc.Accordion([
             dbc.AccordionItem([
-                html.P("Here you can view the raw power data of the selected building and the raw weather data. The used data is from 2017"
+                html.P("Here you can view the raw power data of the selected building and the raw weather data. The used data is from 2017 "
                        "and 2018"),
             ], title="⚡ Raw Data"),
 
@@ -732,20 +733,20 @@ help_layout = html.Div([
 
             dbc.AccordionItem([
                 html.P("In this tab, the features that will be used in the model can be selected."
-                       "To help the user choose the final features, the available features are ranked based on the following three"
+                       "To help the user choose the final features, the available features are ranked based on the following three "
                        "methods:"),
                 html.Ul([
                     html.Li([
-                        html.B('Filter methods:'),
+                        html.B('Filter methods: '),
                         'Uses measures to score the different features (correlation, mutual information, T-test, F-test,...)'
                     ]),
                     html.Li([
-                        html.B('Embedded methods:'),
-                        'Methods that are based on the results of testing subsets of features in preliminary models. We use a DecisionTree model as the estimator model: '
+                        html.B('Embedded methods: '),
+                        'Methods that are based on the results of testing subsets of features in preliminary models. We use a DecisionTree model as the estimator model. '
                     ]),
                     html.Li([
-                        html.B('Wrapper methods:'),
-                        'Searches the space of features and model parameters simultaneously. Here we use a RandomForest model as the estimator model:'
+                        html.B('Wrapper methods: '),
+                        'Searches the space of features and model parameters simultaneously. Here we use a RandomForest model as the estimator model.'
                     ])
                 ])
             ], title="🎛️ Feature Selection"),
@@ -753,7 +754,7 @@ help_layout = html.Div([
             dbc.AccordionItem([
                 html.P("Compare different forecasting models to predict the electricity consumption."),
                 html.Ul([
-                    html.Li("The different models first need to be trained, based on the features that were selected."),
+                    html.Li("The different models first need to be trained, based on the features that were selected. "),
                     html.Li("The user can then select the best model, which performance will be validated in the Model Validation Tab."),
                 ])
             ], title="🤖 Models"),
@@ -1196,7 +1197,6 @@ def update_content(left_clicks, right_clicks, tab_click):
     if active_index_weather_analysis == -1:
         active_index_weather_analysis = 4
 
-    print(active_index_weather_analysis)
     # Define the content for each index
     if active_index_weather_analysis == 0:
         content = make_table_analysis('Temperature [°C]')
@@ -1253,7 +1253,6 @@ def update_content(left_clicks, right_clicks, tab_click):
     if active_index_weather_analysis == -1:
         active_index_weather_analysis = 4
 
-    print(active_index_weather_analysis)
     # Define the content for each index
     if active_index_weather_analysis == 0:
         content = make_table_analysis('Relative Humidity [%]')
@@ -2168,9 +2167,9 @@ def update_graphs_on_tab_change(pathname):
 )
 def update_selected_model(selected_button):
     global selected_model
-    if selected_button != '':
+    if selected_button is not None:
         selected_model = selected_button
-        print(selected_model)
+        print(f'This is the selected model:{selected_model}')
     return f"Selected Model: {selected_model}"
 
 
@@ -2222,7 +2221,8 @@ def update_content(left_clicks, right_clicks):
         elif selected_model == 'Support Vector Regression':
             test = dataframe_test_data['Power [kW]']
             features = dataframe_test_data[selected_features].values
-            predictions_scaled = model_SVR.predict(features)
+            predictions_scaled = model_SVR.predict(scaler_SVR_features.fit_transform(features))
+            print(f'This is the scaler that is used for descaling: {scaler_SVR}')
             predictions = scaler_SVR.inverse_transform(predictions_scaled.reshape(-1, 1)).flatten()
         elif selected_model == 'Decision Tree':
             test = dataframe_test_data['Power [kW]']
@@ -2235,7 +2235,7 @@ def update_content(left_clicks, right_clicks):
         elif selected_model == 'Neural Network':
             test = dataframe_test_data['Power [kW]']
             features = dataframe_test_data[selected_features].values
-            predictions_scaled = model_NN.predict(features)
+            predictions_scaled = model_NN.predict(scaler_NN_features.fit_transform(features))
             predictions = scaler_NN.inverse_transform(predictions_scaled.reshape(-1, 1)).flatten()
         # Define the content for each index
         if active_index_validation == 0:
