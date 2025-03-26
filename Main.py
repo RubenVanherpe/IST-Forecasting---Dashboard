@@ -103,6 +103,7 @@ app = dash.Dash(__name__, external_stylesheets=[
 ], suppress_callback_exceptions=True)
 app.title = "IST - Electricity Forecasting Tool"
 load_figure_template("superhero")
+server = app.server
 
 #LAYOUT OF THE WELCOME PAGE
 welcome_layout = html.Div([
